@@ -114,7 +114,7 @@ export function SongObject({
               roughness={0.45}
               metalness={0.35}
               emissive={PALETTE.frame}
-              emissiveIntensity={0.35}
+              emissiveIntensity={0.12}
             />
           </mesh>
 

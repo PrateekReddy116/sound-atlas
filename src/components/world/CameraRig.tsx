@@ -147,7 +147,7 @@ export function CameraRig({
           target: new Vector3(position[0], position[1], position[2]),
           yaw: shortestAngle(cur.current.yaw, Math.random() * Math.PI * 2),
           pitch: 0.12 + Math.random() * 0.18,
-          dist: options?.close ?? 8.5,
+          dist: options?.close ?? 13.5,
         };
         if (reducedMotion) {
           goal.current = {
