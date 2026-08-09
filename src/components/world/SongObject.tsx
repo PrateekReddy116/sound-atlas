@@ -37,8 +37,10 @@ export function SongObject({
     loader.load(
       song.artworkUrl,
       (loaded) => {
+        loaded.colorSpace = SRGBColorSpace;
         if (!cancelled) setTexture(loaded);
       },
+
       undefined,
       () => undefined,
     );
