@@ -1,7 +1,15 @@
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
-import { AdditiveBlending, DoubleSide, Group, Texture, TextureLoader } from "three";
+import {
+  AdditiveBlending,
+  DoubleSide,
+  Group,
+  SRGBColorSpace,
+  Texture,
+  TextureLoader,
+} from "three";
+
 
 import { PALETTE } from "@/lib/atlas/palette";
 import type { SongLocation } from "@/lib/atlas/types";
