@@ -12,6 +12,10 @@ export type SongLocation = {
   createdBy: string | null;
   createdAt: string;
   username: string | null;
+  // Geographic Location Data for 2D Map
+  lat?: number;
+  lng?: number;
+  locationName?: string;
 };
 
 export type SpotifyTrack = {
@@ -20,4 +24,7 @@ export type SpotifyTrack = {
   artist: string;
   album: string | null;
   artworkUrl: string | null;
+  lat?: number;
+  lng?: number;
+  locationName?: string;
 };

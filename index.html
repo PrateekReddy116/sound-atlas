@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sound Atlas — By the world, for the world.</title>
+    
+    <!-- Modern Typography: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Opening Sequence Overlay -->
+    <div id="intro-overlay" class="intro-overlay">
+      <div id="intro-text-container" class="intro-text-container">
+        <h1 id="intro-text" class="intro-text"></h1>
+        <p id="intro-subtext" class="intro-subtext"></p>
+      </div>
+    </div>
+
+    <!-- Branding Header -->
+    <header class="brand-header" id="brand-header">
+      <h1 class="brand-title">SOUND ATLAS</h1>
+      <p class="brand-subtitle" id="view-mode-indicator">World Map View</p>
+    </header>
+
+    <!-- Top Right Action Controls & View Mode Toggle -->
+    <div class="top-nav" id="top-nav">
+      <!-- Minimalist View Mode Toggle -->
+      <div class="mode-toggle-switch" id="mode-toggle-switch" title="Switch View Mode">
+        <button class="toggle-option active" id="toggle-map-mode">🗺️ World Map</button>
+        <button class="toggle-option" id="toggle-abyss-mode">🌌 3D Abyss</button>
+      </div>
+
+      <button class="nav-btn primary-nav-btn" id="open-leave-song-btn">
+        <span class="btn-icon">+</span>
+        <span>Leave a Song</span>
+      </button>
+      <button class="nav-btn secondary-nav-btn" id="take-me-anywhere-btn">
+        <span class="btn-icon">✦</span>
+        <span>Take Me Anywhere</span>
+      </button>
+    </div>
+
+    <!-- The Infinite 3D World Canvas -->
+    <div id="atlas-container" class="atlas-container">
+      <div id="canvas-layer" class="canvas-layer">
+        <!-- 3D Region/City Labels, Star Particles, and Song Artifact Nodes are injected here -->
+      </div>
+      
+      <!-- Vignette atmospheric overlay -->
+      <div class="vignette"></div>
+    </div>
+
+    <!-- Floating Spotify Detail Panel (Song Player) -->
+    <div id="song-panel" class="song-panel">
+      <button class="panel-close-btn" id="close-song-panel" title="Close panel">✕</button>
+      <div class="song-panel-header">
+        <span class="location-badge" id="panel-location-badge">📍 Tokyo, Japan</span>
+        <span class="creator-badge" id="panel-creator-badge">Left by @traveler</span>
+      </div>
+      <div class="song-panel-body">
+        <div class="spotify-embed-container" id="spotify-embed-container">
+          <!-- Spotify iframe injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave a Song Modal -->
+    <div id="leave-song-modal" class="modal-overlay">
+      <div class="modal-card">
+        <button class="modal-close-btn" id="close-modal-btn">✕</button>
+        <h2 class="modal-title">Leave a Song in the World</h2>
+        <p class="modal-subtitle">Share a song you love. It will remain in the world for strangers to discover.</p>
+        
+        <div class="search-box">
+          <input type="text" id="song-search-input" placeholder="Search song, artist, or paste Spotify track link..." />
+        </div>
+
+        <div class="location-selector-group">
+          <label class="input-label">Location in the World:</label>
+          <div class="location-picker-row">
+            <span class="location-status" id="detected-location-status">📍 Detecting location...</span>
+            <select id="city-select" class="city-dropdown">
+              <option value="auto">Use My Current Location</option>
+              <option value="tokyo">Tokyo, Japan</option>
+              <option value="london">London, UK</option>
+              <option value="newyork">New York, USA</option>
+              <option value="paris">Paris, France</option>
+              <option value="mumbai">Mumbai, India</option>
+              <option value="sydney">Sydney, Australia</option>
+              <option value="rio">Rio de Janeiro, Brazil</option>
+              <option value="cairo">Cairo, Egypt</option>
+              <option value="reykjavik">Reykjavik, Iceland</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Search Results List -->
+        <div class="search-results-list" id="search-results-list">
+          <!-- Preset/Search results rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" class="toast-banner"></div>
+
+    <!-- Attribution Credit (Fixed Bottom-Right) -->
+    <footer class="reddit-attribution">
+      Inspired by odeta (father of three) on Reddit.
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

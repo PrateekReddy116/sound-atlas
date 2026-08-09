@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { BRAND } from "@/lib/atlas/brand";
 import { useSession } from "@/hooks/useSession";
 
@@ -46,7 +45,8 @@ function AuthPage() {
         });
         if (error) throw error;
         if (!data.session) {
-          toast("Check your email to confirm your account.");
+          toast("Account created! Check your email to confirm, or sign in if confirmation is disabled.");
+          setMode("signin");
           return;
         }
       } else {
@@ -61,41 +61,18 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Couldn't sign in with Google.");
-      return;
-    }
-    if (result.redirected) return;
-    void navigate({ to: "/" });
-  };
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-5">
-      <div className="glass w-full max-w-sm rounded-xl p-7">
+      <div className="glass w-full max-w-sm rounded-2xl p-7 shadow-2xl border border-white/20">
         <p className="text-whisper">{BRAND.name}</p>
-        <h1 className="mt-3 text-3xl leading-snug">Sign in to leave a song</h1>
+        <h1 className="mt-3 text-3xl font-serif leading-snug">
+          {mode === "signin" ? "Sign in to leave a song" : "Create your account"}
+        </h1>
         <p className="mt-2 text-xs text-muted-foreground">
           Wandering never needs an account — only leaving a song does.
         </p>
 
-        <button
-          onClick={google}
-          className="mt-6 w-full rounded-full border border-border px-4 py-2.5 text-sm transition-colors hover:border-primary hover:text-primary"
-        >
-          Continue with Google
-        </button>
-
-        <div className="my-5 flex items-center gap-3">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-whisper">or</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <form onSubmit={submit} className="space-y-3">
+        <form onSubmit={submit} className="mt-6 space-y-4">
           <label className="block">
             <span className="text-whisper">Email</span>
             <input
@@ -103,7 +80,8 @@ function AuthPage() {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1.5 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              placeholder="you@example.com"
+              className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
           <label className="block">
@@ -114,26 +92,27 @@ function AuthPage() {
               minLength={6}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              placeholder="••••••••"
+              className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-full bg-primary px-4 py-2.5 text-sm text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-60 shadow-md"
           >
             {mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-6 flex items-center justify-between">
           <button
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="text-whisper hover:text-foreground"
+            className="text-whisper hover:text-foreground transition-colors"
           >
             {mode === "signin" ? "Create an account" : "I already have an account"}
           </button>
-          <Link to="/" className="text-whisper hover:text-foreground">
+          <Link to="/" className="text-whisper hover:text-foreground transition-colors">
             Back to the world
           </Link>
         </div>

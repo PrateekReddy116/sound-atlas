@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
-import { Loader2, Plus, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Compass } from "lucide-react";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,8 +16,14 @@ import { findOpenSpot, isCrowded, pickDiscovery } from "@/lib/atlas/world";
 import type { WorldController } from "@/components/world/CameraRig";
 import { supabase } from "@/integrations/supabase/client";
 
+// Exact R3F Three.js 3D Abyss Canvas from echo-world repo
 const WorldCanvas = lazy(() =>
   import("@/components/world/WorldCanvas").then((module) => ({ default: module.WorldCanvas })),
+);
+
+// Geographic 2D World Map Canvas
+const WorldMapCanvas = lazy(() =>
+  import("@/components/world/WorldMapCanvas").then((module) => ({ default: module.WorldMapCanvas })),
 );
 
 export const Route = createFileRoute("/")({
@@ -50,6 +56,7 @@ function WorldPage() {
   const revealRef = useRef<SongLocation | null>(null);
 
   const [entered, setEntered] = useState(false);
+  const [viewMode, setViewMode] = useState<"3d" | "2d">("3d");
   const [selected, setSelected] = useState<SongLocation | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [placingTrack, setPlacingTrack] = useState<SpotifyTrack | null>(null);
@@ -80,15 +87,42 @@ function WorldPage() {
     if (!reveal) setSelected(song);
   }, []);
 
+  // 2D ↔ 3D Cross-View Focus Synchronization
+  const handleViewModeChange = (newMode: "3d" | "2d") => {
+    if (newMode === viewMode) return;
+    setViewMode(newMode);
+    
+    if (selected) {
+      toast.success(
+        newMode === "3d"
+          ? `Focusing 3D Abyss on "${selected.title}"`
+          : `Centering 2D Map on "${selected.locationName || selected.title}"`
+      );
+      if (newMode === "3d") {
+        setTimeout(() => {
+          controllerRef.current?.travelTo(selected.position);
+        }, 300);
+      }
+    } else {
+      toast(newMode === "3d" ? "Switched to 3D Abyss View" : "Switched to World Map View");
+    }
+  };
+
   const takeMeAnywhere = useCallback(() => {
     const destination = pickDiscovery(songs, selected?.id ?? null);
     if (!destination) {
-      toast("There's nowhere else to wander yet. Leave a song behind.");
+      toast("The world is still quiet. Leave a song behind.");
       return;
     }
-    setSelected(null);
-    focusSong(destination, true);
-  }, [songs, selected, focusSong]);
+
+    if (viewMode === "2d") {
+      setSelected(destination);
+      toast.success(`Discovered "${destination.title}" in ${destination.locationName || "the world"}`);
+    } else {
+      setSelected(null);
+      focusSong(destination, true);
+    }
+  }, [songs, selected, focusSong, viewMode]);
 
   const startLeaving = useCallback(() => {
     if (!user) {
@@ -106,14 +140,24 @@ function WorldPage() {
       const spot = isCrowded(position, songs) ? findOpenSpot(position, songs, 10) : position;
       const pending = toast.loading("Leaving this song behind...");
       try {
-        const song = await leaveSong.mutateAsync({ track, position: spot, userId: user.id });
+        const song = await leaveSong.mutateAsync({
+          track,
+          position: spot,
+          userId: user.id,
+          lat: track.lat,
+          lng: track.lng,
+          locationName: track.locationName,
+        });
         toast.success("Left in the world.", { id: pending });
-        focusSong(song, false);
+        setSelected(song);
+        if (viewMode === "3d") {
+          focusSong(song, false);
+        }
       } catch {
         toast.error("Couldn't leave that song. Try again.", { id: pending });
       }
     },
-    [user, songs, leaveSong, focusSong],
+    [user, songs, leaveSong, focusSong, viewMode],
   );
 
   const isEmpty = !isLoading && songs.length === 0;
@@ -128,21 +172,32 @@ function WorldPage() {
         }
       >
         <Suspense fallback={null}>
-          <WorldCanvas
-            songs={songs}
-            selectedId={selected?.id ?? null}
-            onSelect={(song) => focusSong(song, false)}
-            onDeselect={() => setSelected(null)}
-            placing={placingTrack !== null}
-            onPlace={(position) => {
-              const track = placingTrack;
-              setPlacingTrack(null);
-              if (track) void commitSong(track, position);
-            }}
-            controllerRef={controllerRef}
-            reducedMotion={reducedMotion}
-            onTravelChange={onTravelChange}
-          />
+          {viewMode === "3d" ? (
+            /* Exact Three.js / R3F 3D Abyss Canvas from echo-world repo */
+            <WorldCanvas
+              songs={songs}
+              selectedId={selected?.id ?? null}
+              onSelect={(song) => focusSong(song, false)}
+              onDeselect={() => setSelected(null)}
+              placing={placingTrack !== null}
+              onPlace={(position) => {
+                const track = placingTrack;
+                setPlacingTrack(null);
+                if (track) void commitSong(track, position);
+              }}
+              controllerRef={controllerRef}
+              reducedMotion={reducedMotion}
+              onTravelChange={onTravelChange}
+            />
+          ) : (
+            /* Geographic 2D World Map Canvas */
+            <WorldMapCanvas
+              songs={songs}
+              selectedId={selected?.id ?? null}
+              onSelect={(song) => setSelected(song)}
+              onDeselect={() => setSelected(null)}
+            />
+          )}
         </Suspense>
       </ClientOnly>
 
@@ -152,12 +207,36 @@ function WorldPage() {
           <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-5 sm:p-7">
             <div className="animate-soft-fade">
               <p className="text-sm tracking-[0.28em] uppercase">{BRAND.name}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{BRAND.tagline}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {viewMode === "3d" ? "3D Abyss Space View" : "Geographic World Map View"}
+              </p>
             </div>
-            <nav className="pointer-events-auto flex items-center gap-5">
+            <nav className="pointer-events-auto flex items-center gap-4 sm:gap-6">
+              {/* Minimalist View Mode Switcher */}
+              <div className="glass flex items-center rounded-full p-1 border border-border/40">
+                <button
+                  onClick={() => handleViewModeChange("3d")}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+                    viewMode === "3d" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Compass className="size-3.5" />
+                  3D Abyss
+                </button>
+                <button
+                  onClick={() => handleViewModeChange("2d")}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs transition-all ${
+                    viewMode === "2d" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Globe className="size-3.5" />
+                  2D World Map
+                </button>
+              </div>
+
               <button
                 onClick={() => setAboutOpen((open) => !open)}
-                className="text-whisper hover:text-foreground"
+                className="text-whisper hover:text-foreground text-xs sm:text-sm"
               >
                 About
               </button>
@@ -167,12 +246,12 @@ function WorldPage() {
                     await supabase.auth.signOut();
                     toast("Signed out.");
                   }}
-                  className="text-whisper hover:text-foreground"
+                  className="text-whisper hover:text-foreground text-xs sm:text-sm"
                 >
                   Sign out
                 </button>
               ) : (
-                <Link to="/auth" className="text-whisper hover:text-foreground">
+                <Link to="/auth" className="text-whisper hover:text-foreground text-xs sm:text-sm">
                   Sign in
                 </Link>
               )}
@@ -206,7 +285,7 @@ function WorldPage() {
           {isEmpty ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
               <p className="max-w-sm text-center text-lg text-muted-foreground">
-                The world is still quiet. Leave something behind.
+                The world is still quiet. Leave a song behind.
               </p>
             </div>
           ) : null}
@@ -250,7 +329,7 @@ function WorldPage() {
           </div>
 
           <p className="pointer-events-none absolute right-3 bottom-2 z-20 text-[10px] text-muted-foreground/70">
-            {BRAND.credit}
+            Inspired by odeta (father of three) on Reddit.
           </p>
         </>
       ) : (

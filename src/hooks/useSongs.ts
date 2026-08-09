@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,23 @@ type Row = {
   profiles?: { username: string | null } | null;
 };
 
-function toSong(row: Row): SongLocation {
+// Preset geographic coordinates for seed songs
+const DEMO_GEO_MAP: Record<string, { lat: number; lng: number; locationName: string }> = {
+  "Space Song": { lat: 40.7128, lng: -74.0060, locationName: "New York, USA" },
+  "Sparkle": { lat: 35.6762, lng: 139.6503, locationName: "Tokyo, Japan" },
+  "Midnight City": { lat: 48.8566, lng: 2.3522, locationName: "Paris, France" },
+  "Starman": { lat: 51.5074, lng: -0.1278, locationName: "London, UK" },
+  "Kun Faya Kun": { lat: 19.0760, lng: 72.8777, locationName: "Mumbai, India" },
+  "Resonance": { lat: 64.1466, lng: -21.9426, locationName: "Reykjavik, Iceland" },
+};
+
+function toSong(row: Row, index: number = 0): SongLocation {
+  const demoGeo = DEMO_GEO_MAP[row.title] || {
+    lat: (index * 17) % 120 - 60,
+    lng: (index * 31) % 360 - 180,
+    locationName: "Earth",
+  };
+
   return {
     id: row.id,
     spotifyTrackId: row.spotify_track_id,
@@ -36,11 +53,16 @@ function toSong(row: Row): SongLocation {
     createdBy: row.created_by,
     createdAt: row.created_at,
     username: row.profiles?.username ?? null,
+    lat: demoGeo.lat,
+    lng: demoGeo.lng,
+    locationName: demoGeo.locationName,
   };
 }
 
 export function useSongs() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["world-locations"],
     queryFn: async (): Promise<SongLocation[]> => {
       const { data, error } = await supabase
@@ -51,10 +73,36 @@ export function useSongs() {
         .order("created_at", { ascending: true })
         .limit(2000);
       if (error) throw error;
-      return ((data ?? []) as Row[]).map(toSong);
+      return ((data ?? []) as Row[]).map((row, idx) => toSong(row, idx));
     },
     staleTime: 30_000,
   });
+
+  // Supabase Realtime Subscription: Listen for live song additions across all clients!
+  useEffect(() => {
+    const channel = supabase
+      .channel("public:world_locations")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "world_locations" },
+        (payload) => {
+          const newRow = payload.new as Row;
+          const newSong = toSong(newRow, Date.now());
+          queryClient.setQueryData<SongLocation[]>(["world-locations"], (prev) => {
+            if (!prev) return [newSong];
+            if (prev.some((s) => s.id === newSong.id)) return prev;
+            return [...prev, newSong];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return query;
 }
 
 export function useLeaveSong() {
@@ -64,6 +112,9 @@ export function useLeaveSong() {
       track: SpotifyTrack;
       position: [number, number, number];
       userId: string;
+      lat?: number;
+      lng?: number;
+      locationName?: string;
     }): Promise<SongLocation> => {
       const { data, error } = await supabase
         .from("world_locations")
@@ -84,7 +135,11 @@ export function useLeaveSong() {
         )
         .single();
       if (error) throw error;
-      return toSong(data as Row);
+      const song = toSong(data as Row);
+      if (input.lat !== undefined) song.lat = input.lat;
+      if (input.lng !== undefined) song.lng = input.lng;
+      if (input.locationName) song.locationName = input.locationName;
+      return song;
     },
     onSuccess: (song) => {
       queryClient.setQueryData<SongLocation[]>(["world-locations"], (previous) =>

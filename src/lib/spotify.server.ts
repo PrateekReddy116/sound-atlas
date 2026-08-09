@@ -50,20 +50,56 @@ function toTrack(track: ApiTrack): SpotifyTrack {
 export async function searchSpotifyTracks(query: string): Promise<SpotifyTrack[]> {
   const id = process.env["SPOTIFY_CLIENT_ID"];
   const secret = process.env["SPOTIFY_CLIENT_SECRET"];
-  if (!id || !secret) return [];
-  const token = await getAppToken(id, secret);
-  const url = new URL("https://api.spotify.com/v1/search");
-  url.searchParams.set("q", query);
-  url.searchParams.set("type", "track");
-  url.searchParams.set("limit", "10");
-  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error("Spotify search is unavailable right now.");
-  const json = (await response.json()) as { tracks?: { items: ApiTrack[] } };
-  return (json.tracks?.items ?? []).filter(Boolean).map(toTrack);
+
+  // If Spotify API credentials are set, use official Spotify Search API
+  if (id && secret) {
+    try {
+      const token = await getAppToken(id, secret);
+      const url = new URL("https://api.spotify.com/v1/search");
+      url.searchParams.set("q", query);
+      url.searchParams.set("type", "track");
+      url.searchParams.set("limit", "10");
+      const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+      if (response.ok) {
+        const json = (await response.json()) as { tracks?: { items: ApiTrack[] } };
+        return (json.tracks?.items ?? []).filter(Boolean).map(toTrack);
+      }
+    } catch (err) {
+      console.warn("Spotify search failed, falling back to public music catalog", err);
+    }
+  }
+
+  // Universal Public Fallback Search (iTunes API — 0 setup required, works for any song query)
+  try {
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=10`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = (await res.json()) as {
+        results: Array<{
+          trackId: number;
+          trackName: string;
+          artistName: string;
+          collectionName: string;
+          artworkUrl100: string;
+        }>;
+      };
+      return data.results.map((item) => ({
+        id: String(item.trackId),
+        title: item.trackName,
+        artist: item.artistName,
+        album: item.collectionName || null,
+        artworkUrl: item.artworkUrl100 ? item.artworkUrl100.replace("100x100bb", "300x300bb") : null,
+      }));
+    }
+  } catch (err) {
+    console.warn("Fallback music search error", err);
+  }
+
+  return [];
 }
 
 export function hasSpotifyCredentials() {
-  return Boolean(process.env["SPOTIFY_CLIENT_ID"] && process.env["SPOTIFY_CLIENT_SECRET"]);
+  return true; // Search is always enabled now with fallback support
 }
 
 function meta(html: string, property: string) {
@@ -81,10 +117,6 @@ function decode(value: string | null) {
     .replace(/&gt;/g, ">");
 }
 
-/**
- * Public-metadata lookup for a single track. Works without app credentials so a
- * pasted Spotify link is always a valid way to leave a song.
- */
 export async function lookupPublicTrack(trackId: string): Promise<SpotifyTrack | null> {
   const [page, oembed] = await Promise.all([
     fetch(`https://open.spotify.com/track/${trackId}`, {

@@ -1,12 +1,9 @@
-import { X } from "lucide-react";
-import { useState } from "react";
-
+import { X, Play, ExternalLink, MapPin } from "lucide-react";
 import type { SongLocation } from "@/lib/atlas/types";
 import { timeAgo } from "@/lib/atlas/world";
 
 /**
- * Floating discovery panel. Spotify playback happens exclusively inside
- * Spotify's official embed — nothing is hosted or proxied here.
+ * Apple Design minimal discovery panel (No Emojis, Clean Lucide SVG Icons).
  */
 export function SongPanel({
   song,
@@ -17,76 +14,98 @@ export function SongPanel({
   isMine: boolean;
   onClose: () => void;
 }) {
-  const [listening, setListening] = useState(false);
+  const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+    `${song.artist} ${song.title} official audio`,
+  )}`;
 
   return (
     <aside
       aria-label={`${song.title} by ${song.artist}`}
-      className="glass animate-rise pointer-events-auto absolute bottom-24 left-1/2 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-xl p-4 sm:bottom-8 sm:left-8 sm:translate-x-0"
+      className="glass animate-rise pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl p-5 shadow-[0_25px_60px_rgba(0,0,0,0.6)] border border-white/20 sm:bottom-8 sm:left-8 sm:translate-x-0"
     >
+      {/* Apple-style floating close pill */}
       <button
         onClick={onClose}
         aria-label="Close song details"
-        className="absolute top-3 right-3 text-muted-foreground transition-colors hover:text-foreground"
+        className="absolute top-4 right-4 z-10 flex size-8 items-center justify-center rounded-full bg-black/40 text-muted-foreground backdrop-blur-md transition-all duration-200 hover:bg-black/60 hover:text-white active:scale-90"
       >
         <X className="size-4" />
       </button>
 
+      {/* Hero Album Artwork */}
       {song.artworkUrl ? (
-        <img
-          src={song.artworkUrl}
-          alt={`Album artwork for ${song.title} by ${song.artist}`}
-          loading="lazy"
-          className="aspect-square w-full rounded-md object-cover"
-        />
+        <div className="relative overflow-hidden rounded-2xl shadow-lg border border-white/10 group">
+          <img
+            src={song.artworkUrl}
+            alt={`Album artwork for ${song.title} by ${song.artist}`}
+            loading="lazy"
+            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {song.locationName ? (
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[11px] font-medium tracking-wide text-white/90 backdrop-blur-md shadow-md">
+              <MapPin className="size-3 text-primary" />
+              {song.locationName}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
-      <h2 className="mt-4 text-xl leading-snug">{song.title}</h2>
-      <p className="text-sm text-muted-foreground">{song.artist}</p>
-      {song.album ? <p className="mt-1 text-xs text-muted-foreground">{song.album}</p> : null}
-
+      {/* Typography Hierarchy */}
       <div className="mt-4">
-        {listening ? (
-          <iframe
-            title={`Spotify player for ${song.title}`}
-            src={`https://open.spotify.com/embed/track/${song.spotifyTrackId}?theme=0`}
-            width="100%"
-            height="152"
-            frameBorder="0"
-            loading="lazy"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            className="rounded-md"
-          />
-        ) : (
-          <button
-            onClick={() => setListening(true)}
-            className="w-full rounded-full border border-border px-4 py-2.5 text-sm text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            ▶ Listen on Spotify
-          </button>
-        )}
+        <h2 className="text-2xl font-serif font-normal text-foreground leading-tight tracking-tight">
+          {song.title}
+        </h2>
+        <p className="mt-1 text-sm font-medium text-muted-foreground">{song.artist}</p>
+        {song.album ? <p className="mt-0.5 text-xs text-muted-foreground/60">{song.album}</p> : null}
       </div>
 
-      <p className="mt-4 text-xs text-muted-foreground">
+      {/* Integrated Spotify Embed Player */}
+      <div className="mt-4 overflow-hidden rounded-xl bg-black/40 border border-white/10 shadow-inner">
+        <iframe
+          title={`Spotify player for ${song.title}`}
+          src={`https://open.spotify.com/embed/track/${song.spotifyTrackId}?theme=0`}
+          width="100%"
+          height="80"
+          frameBorder="0"
+          loading="lazy"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          className="w-full rounded-xl"
+        />
+      </div>
+
+      {/* Action Buttons: Full Track & Spotify App */}
+      <div className="mt-4 flex items-center gap-2.5">
+        <a
+          href={youtubeSearchUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 text-xs font-medium text-white transition-all duration-200 hover:bg-white/20 active:scale-95 shadow-sm"
+        >
+          <Play className="size-3.5 fill-current text-white/90" /> Play Full Song
+        </a>
+        <a
+          href={`https://open.spotify.com/track/${song.spotifyTrackId}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center rounded-full border border-white/15 bg-black/30 p-2 text-xs font-medium text-muted-foreground transition-all duration-200 hover:border-white/30 hover:text-white active:scale-95"
+          title="Open in Spotify App"
+        >
+          <ExternalLink className="size-4" />
+        </a>
+      </div>
+
+      {/* Minimalist Footnote Attribution */}
+      <div className="mt-4 text-center text-[11px] font-sans text-muted-foreground/80 tracking-wide">
         {isMine
           ? "Left here by you"
           : song.isDemo
-            ? "Left here as demo content"
+            ? "Demo content"
             : song.username
-              ? `Left here by @${song.username}`
-              : "Left here by someone"}
-        <span aria-hidden> · </span>
+              ? `Left by @${song.username}`
+              : "Left by a stranger"}
+        <span aria-hidden className="mx-1.5 opacity-40">·</span>
         {timeAgo(song.createdAt)}
-      </p>
-
-      <a
-        href={`https://open.spotify.com/track/${song.spotifyTrackId}`}
-        target="_blank"
-        rel="noreferrer"
-        className="text-whisper mt-2 inline-block hover:text-foreground"
-      >
-        Open in Spotify
-      </a>
+      </div>
     </aside>
   );
 }
