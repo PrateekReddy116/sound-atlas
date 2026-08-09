@@ -94,11 +94,11 @@ export function SongObject({
     >
       {/* Halo */}
       <mesh position={[0, 0, -0.2]}>
-        <circleGeometry args={[selected ? 5.4 : 4.2, 48]} />
+        <ringGeometry args={[selected ? 3.6 : 3.2, selected ? 5.2 : 4.2, 64]} />
         <meshBasicMaterial
           color={selected || hovered ? PALETTE.ember : PALETTE.ice}
           transparent
-          opacity={selected ? 0.3 : hovered ? 0.2 : 0.12}
+          opacity={selected ? 0.28 : hovered ? 0.2 : 0.1}
           blending={AdditiveBlending}
           depthWrite={false}
           side={DoubleSide}
@@ -109,8 +109,15 @@ export function SongObject({
         <>
           <mesh>
             <boxGeometry args={[4.4, 4.4, 0.16]} />
-            <meshStandardMaterial color={PALETTE.frame} roughness={0.6} metalness={0.25} />
+            <meshStandardMaterial
+              color={PALETTE.frame}
+              roughness={0.45}
+              metalness={0.35}
+              emissive={PALETTE.frame}
+              emissiveIntensity={0.35}
+            />
           </mesh>
+
           <mesh position={[0, 0, 0.1]}>
             <planeGeometry args={[3.9, 3.9]} />
             {texture ? (
