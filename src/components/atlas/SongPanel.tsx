@@ -1,3 +1,5 @@
+"use client";
+
 import { X, Play, ExternalLink, MapPin } from "lucide-react";
 import type { SongLocation } from "@/lib/atlas/types";
 import { timeAgo } from "@/lib/atlas/world";

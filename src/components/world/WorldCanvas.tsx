@@ -1,3 +1,5 @@
+"use client";
+
 import { Canvas } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type { Mesh } from "three";

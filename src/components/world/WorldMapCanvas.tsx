@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SongLocation } from "@/lib/atlas/types";
 import { GLOBAL_LANDMARKS, latLngTo3D } from "@/lib/atlas/geo";
@@ -70,14 +72,20 @@ export function WorldMapCanvas({
       fetch("https://raw.githubusercontent.com/datameet/maps/master/Country/india-composite.geojson")
         .then((res) => (res.ok ? res.json() : null))
         .catch(() => null),
-    ]).then(([worldGeoJson, indiaGeoJson]) => {
+    ]).then(([worldRaw, indiaRaw]) => {
       if (isCancelled) return;
       const combinedPaths: string[] = [];
+      const worldGeoJson = worldRaw as GeoJson | null;
+      const indiaGeoJson = indiaRaw as GeoJson | GeoFeature | null;
 
       // Add World Countries (excluding India to prevent overlap)
       if (worldGeoJson && worldGeoJson.features) {
-        worldGeoJson.features.forEach((feature: any) => {
-          const name = feature.properties?.ADMIN || feature.properties?.NAME || feature.properties?.SOVEREIGNT || feature.properties?.ISO_A3;
+        worldGeoJson.features.forEach((feature: GeoFeature) => {
+          const name =
+            feature.properties?.ADMIN ||
+            feature.properties?.NAME ||
+            feature.properties?.SOVEREIGNT ||
+            feature.properties?.ISO_A3;
           if (name === "India" || name === "IND") return;
 
           const geom = feature.geometry;
@@ -85,7 +93,7 @@ export function WorldMapCanvas({
           if (geom.type === "Polygon") {
             combinedPaths.push(polygonToSvgPath(geom.coordinates));
           } else if (geom.type === "MultiPolygon") {
-            geom.coordinates.forEach((poly: any) => {
+            geom.coordinates.forEach((poly: Position[][]) => {
               combinedPaths.push(polygonToSvgPath(poly));
             });
           }
@@ -94,14 +102,17 @@ export function WorldMapCanvas({
 
       // Add Official DataMeet India Composite Boundaries
       if (indiaGeoJson) {
-        const features = indiaGeoJson.features || [indiaGeoJson];
-        features.forEach((feat: any) => {
-          const geom = feat.geometry || feat;
+        const features: GeoFeature[] =
+          "features" in indiaGeoJson && indiaGeoJson.features
+            ? indiaGeoJson.features
+            : [indiaGeoJson as GeoFeature];
+        features.forEach((feat) => {
+          const geom = feat.geometry;
           if (!geom) return;
           if (geom.type === "Polygon") {
             combinedPaths.push(polygonToSvgPath(geom.coordinates));
           } else if (geom.type === "MultiPolygon") {
-            geom.coordinates.forEach((poly: any) => {
+            geom.coordinates.forEach((poly: Position[][]) => {
               combinedPaths.push(polygonToSvgPath(poly));
             });
           }
@@ -323,13 +334,24 @@ export function WorldMapCanvas({
   );
 }
 
-function polygonToSvgPath(coordinates: any[]) {
+type Position = number[];
+type GeoGeometry =
+  | { type: "Polygon"; coordinates: Position[][] }
+  | { type: "MultiPolygon"; coordinates: Position[][][] };
+type GeoFeature = {
+  type?: string;
+  properties?: Record<string, string | undefined>;
+  geometry?: GeoGeometry;
+};
+type GeoJson = { features?: GeoFeature[] };
+
+function polygonToSvgPath(coordinates: Position[][]) {
   let pathStr = "";
-  coordinates.forEach((ring: any[]) => {
+  coordinates.forEach((ring) => {
     if (ring.length < 3) return;
-    const pathPoints = ring.map((pt: number[]) => {
-      const lng = pt[0];
-      const lat = pt[1];
+    const pathPoints = ring.map((pt) => {
+      const lng = pt[0] ?? 0;
+      const lat = pt[1] ?? 0;
       const x = ((lng + 180) / 360) * 7200;
       const y = ((90 - lat) / 180) * 3600;
       return `${x.toFixed(1)} ${y.toFixed(1)}`;

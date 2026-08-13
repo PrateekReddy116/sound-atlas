@@ -1,4 +1,5 @@
-import { useServerFn } from "@tanstack/react-start";
+"use client";
+
 import { Loader2, Search, X, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -15,19 +16,19 @@ export function LeaveSongSheet({
   onPlaceHere: (track: SpotifyTrack) => void;
   onChooseSpot: (track: SpotifyTrack) => void;
 }) {
-  const search = useServerFn(searchSongs);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [results, setResults] = useState<SpotifyTrack[]>([]);
-  const [searchEnabled, setSearchEnabled] = useState(true);
+  const [_searchEnabled, setSearchEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chosen, setChosen] = useState<SpotifyTrack | null>(null);
 
   // Privacy-friendly location selection (Apple Design Responsibility §16)
   const [locationMode, setLocationMode] = useState<"auto" | "city">("auto");
-  const [selectedCity, setSelectedCity] = useState(GLOBAL_LANDMARKS[6]); // Default Tokyo/London
-  const [detectedLoc, setDetectedLoc] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  const fallbackCity = GLOBAL_LANDMARKS[6] ?? GLOBAL_LANDMARKS[0]!;
+  const [selectedCity, setSelectedCity] = useState(fallbackCity);
+  const [detectedLoc, _setDetectedLoc] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(query.trim()), 320);
@@ -42,7 +43,7 @@ export function LeaveSongSheet({
     }
     let cancelled = false;
     setLoading(true);
-    search({ data: { query: debounced } })
+    searchSongs({ query: debounced })
       .then((response) => {
         if (cancelled) return;
         setSearchEnabled(response.searchEnabled);
@@ -62,7 +63,7 @@ export function LeaveSongSheet({
     return () => {
       cancelled = true;
     };
-  }, [debounced, search]);
+  }, [debounced]);
 
   const hint = useMemo(
     () => "Search for any song title or artist, or paste a Spotify track link",
