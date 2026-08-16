@@ -134,8 +134,9 @@ function buildVortexGeometry() {
       else mixed.copy(cPink).lerp(cLav, (t - 0.4) / 0.6);
 
       // Brighter / slightly larger near core — still delicate.
-      sizes[i] = 0.55 + (1 - t) * 0.75 + random() * 0.28;
-      if (random() < 0.04) sizes[i] *= 1.4;
+      let coreSize = 0.55 + (1 - t) * 0.75 + random() * 0.28;
+      if (random() < 0.04) coreSize *= 1.4;
+      sizes[i] = coreSize;
       mixed.multiplyScalar(0.72 + (1 - t) * 0.28);
     } else {
       // Organic spiral-like arms with heavy noise — suggested, not perfect.
