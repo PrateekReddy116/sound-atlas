@@ -23,7 +23,8 @@ export function WorldMapCanvas({
   // Single unified array of non-overlapping country vector paths
   const [unifiedMapPaths, setUnifiedMapPaths] = useState<string[]>([]);
   
-  const cameraRef = useRef({ x: 0, y: 0, z: 0 });
+  // Negative Z pushes the 7200×3600 map away under perspective so the full world fits.
+  const cameraRef = useRef({ x: 0, y: 0, z: -2400 });
   const isDraggingRef = useRef(false);
   const totalDragDistanceRef = useRef(0);
   const lastMouseRef = useRef({ x: 0, y: 0 });
@@ -32,13 +33,18 @@ export function WorldMapCanvas({
     if (!canvasLayerRef.current) return;
     const { x, y, z } = cameraRef.current;
     canvasLayerRef.current.style.transform = `scale(1) translate3d(${x}px, ${y}px, ${z}px)`;
-    
+
     if (z > 80) {
       canvasLayerRef.current.classList.add("is-zoomed-in");
     } else {
       canvasLayerRef.current.classList.remove("is-zoomed-in");
     }
   };
+
+  // Apply the zoomed-out starting pose once the layer mounts.
+  useEffect(() => {
+    updateTransform();
+  }, []);
 
   // Smoothly pan camera to selected song when selectedId changes in 2D mode
   useEffect(() => {
@@ -231,7 +237,7 @@ export function WorldMapCanvas({
         className="absolute inset-0 transition-transform duration-700 ease-out"
         style={{
           transformStyle: "preserve-3d",
-          transform: "scale(1) translate3d(0px, 0px, 0px)",
+          transform: "scale(1) translate3d(0px, 0px, -2400px)",
         }}
       >
         {/* Crisp Vector Map */}

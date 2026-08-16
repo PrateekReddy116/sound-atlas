@@ -1,11 +1,11 @@
-/** Shared palette for 3D materials (mirrors the CSS token values). */
+/** Shared palette for 3D materials — Milky Way Abyss. */
 export const PALETTE = {
-  void: "#0b0d14",
-  haze: "#171d2b",
-  terrain: "#141a26",
-  terrainEdge: "#2b3648",
-  star: "#e7e2d6",
-  ember: "#f2b872",
-  ice: "#7fb9cc",
-  frame: "#20252f",
+  void: "#010104",
+  haze: "#0c0a10",
+  terrain: "#12101c",
+  terrainEdge: "#2a2440",
+  star: "#f0ebe0",
+  ember: "#ffe2b0",
+  ice: "#9eb0d8",
+  frame: "#1a1620",
 } as const;

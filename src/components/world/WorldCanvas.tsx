@@ -43,12 +43,12 @@ function PlacementLayer({
       {ghost ? (
         <group position={ghost}>
           <mesh>
-            <boxGeometry args={[4.4, 4.4, 0.16]} />
-            <meshBasicMaterial color={PALETTE.ember} transparent opacity={0.28} />
+            <boxGeometry args={[3.4, 3.4, 0.12]} />
+            <meshBasicMaterial color="#c9a0ff" transparent opacity={0.22} />
           </mesh>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.55, 0]}>
-            <ringGeometry args={[3, 3.4, 48]} />
-            <meshBasicMaterial color={PALETTE.ember} transparent opacity={0.5} />
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.4, 0]}>
+            <ringGeometry args={[2.2, 2.6, 48]} />
+            <meshBasicMaterial color="#e8d4ff" transparent opacity={0.35} />
           </mesh>
         </group>
       ) : null}
@@ -83,19 +83,16 @@ export function WorldCanvas({
     <Canvas
       className="absolute inset-0"
       dpr={[1, 1.75]}
-      camera={{ fov: 55, near: 0.1, far: 2200, position: [0, 6, 30] }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      camera={{ fov: 58, near: 0.1, far: 4000, position: [80, 55, 140] }}
+      gl={{ antialias: true, powerPreference: "high-performance", alpha: false }}
       onPointerMissed={onDeselect}
     >
       <color attach="background" args={[PALETTE.void]} />
-      <fogExp2 attach="fog" args={[PALETTE.void, 0.0055]} />
 
-      <ambientLight intensity={0.45} />
-      <directionalLight position={[30, 60, 20]} intensity={0.8} color={PALETTE.star} />
-      <pointLight position={[-60, 20, -40]} intensity={220} distance={260} color={PALETTE.ice} />
-      <pointLight position={[50, 10, 60]} intensity={180} distance={240} color={PALETTE.ember} />
+      <ambientLight intensity={0.12} />
+      <directionalLight position={[30, 50, 20]} intensity={0.2} color="#d8c8ff" />
 
-      <Atmosphere />
+      <Atmosphere dimmed={selectedId !== null} />
 
       {songs.map((song) => (
         <SongObject

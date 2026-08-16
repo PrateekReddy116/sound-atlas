@@ -11,10 +11,10 @@ export type WorldController = {
 
 type Pose = { target: Vector3; yaw: number; pitch: number; dist: number };
 
-const MIN_PITCH = -0.5;
-const MAX_PITCH = 1.15;
+const MIN_PITCH = -0.45;
+const MAX_PITCH = 1.25;
 const MIN_DIST = 4.5;
-const MAX_DIST = 220;
+const MAX_DIST = 360;
 
 function easeInOut(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -37,8 +37,9 @@ export function CameraRig({
   onTravelChange?: (travelling: boolean) => void;
 }) {
   const { camera, gl } = useThree();
-  const cur = useRef<Pose>({ target: new Vector3(0, 1.5, 0), yaw: 0.5, pitch: 0.24, dist: 30 });
-  const goal = useRef<Pose>({ target: new Vector3(0, 1.5, 0), yaw: 0.5, pitch: 0.24, dist: 30 });
+  // Enter the Abyss: wide framing with depth, core still compelling.
+  const cur = useRef<Pose>({ target: new Vector3(0, 0, 0), yaw: 0.55, pitch: 0.42, dist: 195 });
+  const goal = useRef<Pose>({ target: new Vector3(0, 0, 0), yaw: 0.55, pitch: 0.42, dist: 195 });
   const travel = useRef<{ from: Pose; to: Pose; t: number; dur: number; bump: number } | null>(
     null,
   );
